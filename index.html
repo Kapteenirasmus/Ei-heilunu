@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ei heilunu peitto, ei ollenkaan</title>
+  <style>
+    :root { --bg:#0b0f14; --card:#10161d; --text:#e7edf3; --muted:#9fb0be; --accent:#22c55e; --accent-pressed:#16a34a; }
+    html, body { height:100%; }
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, "Apple Color Emoji", "Segoe UI Emoji"; background: linear-gradient(180deg, #0b0f14 0%, #0f1720 100%); color: var(--text); display:flex; align-items:center; justify-content:center; }
+    .wrap { width: min(880px, 92vw); margin: 4vh auto; }
+    .card { background: var(--card); border: 1px solid #1f2a36; border-radius: 20px; padding: clamp(20px, 4vw, 36px); box-shadow: 0 20px 60px rgba(0,0,0,.35); }
+    h1 { margin: 0 0 18px; font-size: clamp(26px, 3.6vw, 40px); line-height: 1.1; letter-spacing: -0.02em; }
+    p.lead { margin: 0 0 22px; color: var(--muted); }
+    .choices { display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 12px 0 18px; }
+    .choice { appearance:none; border:1px solid #2a3a4a; background:#0c131a; color:var(--text); padding:16px; border-radius:14px; font-size:18px; cursor:pointer; transition: transform .05s ease, border-color .15s ease, background .15s ease; }
+    .choice:hover { border-color:#35506a; }
+    .choice:active { transform: translateY(1px); }
+    .choice.is-selected { outline: 2px solid var(--accent); outline-offset: 2px; background: #0f1b12; border-color:#24422f; }
+    textarea { width:100%; min-height: 120px; resize: vertical; padding:14px; border-radius:14px; border:1px solid #2a3a4a; background:#0c131a; color:var(--text); font-size:16px; box-sizing:border-box; }
+    textarea::placeholder{ color:#6b8297; }
+    .row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:14px; }
+    .btn { appearance:none; border:none; border-radius:14px; padding:14px 18px; font-size:16px; cursor:pointer; transition: filter .15s ease, transform .05s ease; }
+    .btn:active{ transform: translateY(1px); }
+    .btn-primary { background: var(--accent); color:#07130a; font-weight: 700; }
+    .btn-primary:hover { filter: brightness(.95); }
+    .btn-outline { background: transparent; border:1px solid #2a3a4a; color: var(--muted); }
+    .muted { color: var(--muted); }
+    .hr { height:1px; background:#1f2a36; margin:22px 0; border-radius:1px; }
+    .stats { display:flex; gap:18px; flex-wrap:wrap; }
+    .pill { background:#0c131a; border:1px solid #1f2a36; padding:8px 12px; border-radius:999px; font-size:14px; color:var(--muted); }
+    table { width:100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { padding:10px 8px; border-bottom:1px solid #1f2a36; text-align:left; font-size:14px; }
+    th { color:#9fb0be; font-weight:600; }
+    .empty { padding:12px; border:1px dashed #2a3a4a; color:#6b8297; border-radius:12px; background:#0c131a; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="card" aria-labelledby="otsikko">
+      <h1 id="otsikko">Ei heilunu peitto, ei ollenkaan</h1>
+      <p class="lead">Valitse vastaus (kummassakin lukee <strong>Ei</strong>), kirjoita halutessasi palautetta ja paina <em>Lähetä</em>.</p>
+
+      <div class="choices" role="group" aria-label="Vastausvaihtoehdot">
+        <button class="choice" data-value="Ei A" aria-pressed="false">Ei</button>
+        <button class="choice" data-value="Ei B" aria-pressed="false">Ei</button>
+      </div>
+
+      <label for="feedback" class="muted">Vapaa palaute (valinnainen)</label>
+      <textarea id="feedback" placeholder="Kirjoita mitä mielessä…"></textarea>
+
+      <div class="row">
+        <button id="submit" class="btn btn-primary">Lähetä</button>
+        <button id="clear" class="btn btn-outline" title="Tyhjennä lomake">Tyhjennä</button>
+      </div>
+
+      <div class="hr"></div>
+
+      <section aria-labelledby="tulokset-otsikko">
+        <h2 id="tulokset-otsikko" style="margin:0 0 10px; font-size:20px">Vastaukset</h2>
+        <div class="stats">
+          <span class="pill" id="count-pill">Yhteensä: 0</span>
+          <span class="pill" id="a-pill">Ei (A): 0</span>
+          <span class="pill" id="b-pill">Ei (B): 0</span>
+        </div>
+        <div id="table-wrap">
+          <p class="empty" id="empty">Ei vastauksia vielä. Ole ensimmäinen!</p>
+          <table id="results" hidden>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Vastaus</th>
+                <th>Palaute</th>
+                <th>Aikaleima</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="row" style="margin-top:16px">
+          <button id="export" class="btn btn-outline" title="Lataa CSV">Vie CSV</button>
+          <button id="wipe" class="btn btn-outline" title="Poista kaikki tallennetut vastaukset">Tyhjennä tallennetut</button>
+        </div>
+        <p class="muted" style="margin-top:8px">Huom: vastaukset tallentuvat vain tämän selaimen <code>localStorage</code>-muistiin.</p>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    (function(){
+      const choices = Array.from(document.querySelectorAll('.choice'));
+      const feedback = document.getElementById('feedback');
+      const submit = document.getElementById('submit');
+      const clearBtn = document.getElementById('clear');
+      const wipeBtn = document.getElementById('wipe');
+      const exportBtn = document.getElementById('export');
+
+      const table = document.getElementById('results');
+      const tbody = table.querySelector('tbody');
+      const empty = document.getElementById('empty');
+
+      const countPill = document.getElementById('count-pill');
+      const aPill = document.getElementById('a-pill');
+      const bPill = document.getElementById('b-pill');
+
+      let selected = null;
+
+      const KEY = 'ei-heilunu-peitto-vastaukset-v1';
+
+      function load(){
+        try { return JSON.parse(localStorage.getItem(KEY)) || []; }
+        catch(e){ return []; }
+      }
+      function save(rows){ localStorage.setItem(KEY, JSON.stringify(rows)); }
+
+      function render(){
+        const rows = load();
+        tbody.innerHTML = '';
+        if(rows.length === 0){
+          table.hidden = true; empty.hidden = false;
+        } else {
+          table.hidden = false; empty.hidden = true;
+          rows.forEach((r,i)=>{
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${i+1}</td><td>${r.answer}</td><td>${escapeHtml(r.feedback || '')}</td><td>${new Date(r.ts).toLocaleString()}</td>`;
+            tbody.appendChild(tr);
+          });
+        }
+        const a = rows.filter(r=>r.answer==='Ei A').length;
+        const b = rows.filter(r=>r.answer==='Ei B').length;
+        countPill.textContent = `Yhteensä: ${rows.length}`;
+        aPill.textContent = `Ei (A): ${a}`;
+        bPill.textContent = `Ei (B): ${b}`;
+      }
+
+      function escapeHtml(s){
+        return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
+      }
+
+      choices.forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          selected = btn.dataset.value;
+          choices.forEach(b=>{
+            const isSel = b===btn;
+            b.classList.toggle('is-selected', isSel);
+            b.setAttribute('aria-pressed', isSel ? 'true':'false');
+          })
+        })
+      })
+
+      submit.addEventListener('click', ()=>{
+        if(!selected){
+          alert('Valitse ensin jompikumpi: "Ei".');
+          return;
+        }
+        const rows = load();
+        rows.push({ answer: selected, feedback: feedback.value.trim(), ts: Date.now() });
+        save(rows);
+        feedback.value = '';
+        choices.forEach(b=>{ b.classList.remove('is-selected'); b.setAttribute('aria-pressed','false'); });
+        selected = null;
+        render();
+      })
+
+      clearBtn.addEventListener('click', ()=>{
+        feedback.value='';
+        choices.forEach(b=>{ b.classList.remove('is-selected'); b.setAttribute('aria-pressed','false'); });
+        selected=null;
+      })
+
+      wipeBtn.addEventListener('click', ()=>{
+        if(confirm('Poistetaanko kaikki tallennetut vastaukset tästä selaimesta?')){
+          save([]); render();
+        }
+      })
+
+      exportBtn.addEventListener('click', ()=>{
+        const rows = load();
+        const header = ['index','answer','feedback','timestamp_iso'];
+        const csv = [header.join(',')].concat(rows.map((r,i)=>[
+          i+1,
+          '"'+(r.answer||'').replaceAll('"','""')+'"',
+          '"'+(r.feedback||'').replaceAll('"','""')+'"',
+          new Date(r.ts).toISOString()
+        ].join(','))).join('\n');
+        const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'vastaukset.csv'; a.click();
+        URL.revokeObjectURL(url);
+      })
+
+      render();
+    })();
+  </script>
+</body>
+</html>
